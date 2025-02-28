@@ -34,7 +34,6 @@ func (s *Script) createFnNewTimer(sc *script) func(L *lua.LState) int {
 				s.log.Debug().Str("script", sc.path).Str("name", name).Msg("timer finished")
 				return
 			case <-t.t.C:
-				//fn := L.GetGlobal(scriptFuncOnTimer)
 				fn := sc.state.GetGlobal(scriptFuncOnTimer)
 				if fn == lua.LNil || fn == nil || sc.state == nil {
 					s.log.Warn().Str("script", sc.path).Msg("OnTimer function not found, resetting timer")

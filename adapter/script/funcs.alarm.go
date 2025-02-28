@@ -48,7 +48,6 @@ func (s *Script) createFnNewAlarm(sc *script) func(L *lua.LState) int {
 					s.log.Debug().Str("script", sc.path).Str("name", name).Msg("alarm finished")
 					return
 				case <-a.t.C:
-					//fn := L.GetGlobal(scriptFuncOnAlarm)
 					fn := sc.state.GetGlobal(scriptFuncOnAlarm)
 					if fn == lua.LNil || fn == nil || sc.state == nil {
 						s.log.Warn().Str("script", sc.path).Msg("OnAlarm function not found, resetting timer")
@@ -61,6 +60,7 @@ func (s *Script) createFnNewAlarm(sc *script) func(L *lua.LState) int {
 					}, lua.LString(name), data); err != nil {
 						s.log.Error().Err(err).Str("script", sc.path).Msg("failed to call OnAlarm function")
 					}
+					a.reset()
 				}
 			}
 		}()

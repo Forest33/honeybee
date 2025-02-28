@@ -35,7 +35,6 @@ func (s *Script) createFnNewTicker(sc *script) func(L *lua.LState) int {
 					s.log.Debug().Str("script", sc.path).Str("name", name).Msg("ticker finished")
 					return
 				case <-t.t.C:
-					//fn := L.GetGlobal(scriptFuncOnTicker)
 					fn := sc.state.GetGlobal(scriptFuncOnTicker)
 					if fn == lua.LNil || fn == nil || sc.state == nil {
 						s.log.Warn().Str("script", sc.path).Msg("OnTicker function not found, resetting timer")
