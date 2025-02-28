@@ -1,0 +1,14 @@
+version: '3.7'
+
+services:
+  server:
+    image: forest33/honeybee
+    build:
+      context: ./
+      dockerfile: ./deploy/Dockerfile
+    container_name: honeybee
+    restart: always
+    volumes:
+      - ./config:/config
+    environment:
+      - HONEYBEE_CONFIG=/config/honeybee.yaml

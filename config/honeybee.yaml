@@ -1,0 +1,45 @@
+MQTT:
+  Host: 192.168.1.2
+  Port: 1883
+#  ClientID: honeybee
+#  User: user
+#  Password: password
+#  UseTLS: false
+#  ServerTLS: false
+#  CACert: /config/cert/ca-cert.pem
+#  Cert: /config/cert/server-cert.pem
+#  Key: /config/cert/server-key.pem
+#  ConnectRetryInterval: 3
+#  Timeout: 10
+
+Scripts:
+  Folder:
+    - /config/scripts
+  RegistrySize: 32768
+  RegistryMaxSize: 65536
+  RegistryGrowStep: 32
+
+# Telegram bot settings
+#Bot:
+#  Enabled: true
+#  Token: telegram bot token
+#  ChatId:
+#    - user id
+
+# Sending push notifications through ntfy.sh
+Notification:
+  Enabled: true
+  BaseURL: https://ntfy.sh
+  Timeout: 30
+  Priority: default # https://docs.ntfy.sh/publish/#message-priority
+
+Logger:
+  Level: debug
+  TimeFormat: 2006-01-02T15:04:05.000000
+  PrettyPrint: false
+  DisableSampling: true
+  RedirectStdLogger: true
+  ErrorStack: true
+
+Runtime:
+  GoMaxProcs: 0
