@@ -55,4 +55,6 @@ end
 
 function OnAlarm(name, data)
     print("alarm called: ", name)
+    hb.sendMessage("Test message in Telegram")
+    hb.pushNotify("my-super-secret-topic-name", "Message title", "Message text", "high")
 end
