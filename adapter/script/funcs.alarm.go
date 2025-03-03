@@ -37,7 +37,12 @@ func (s *Script) createFnNewAlarm(sc *script) func(L *lua.LState) int {
 			return 0
 		}
 
-		a.start()
+		if err := a.start(); err != nil {
+			s.log.Error().
+				Str("script", sc.path).
+				Str("name", name).
+				Msg("failed to start alarm")
+		}
 
 		go func() {
 			defer sc.deleteAlarm(name)
@@ -51,7 +56,11 @@ func (s *Script) createFnNewAlarm(sc *script) func(L *lua.LState) int {
 					fn := sc.state.GetGlobal(scriptFuncOnAlarm)
 					if fn == lua.LNil || fn == nil || sc.state == nil {
 						s.log.Warn().Str("script", sc.path).Msg("OnAlarm function not found, resetting timer")
-						a.reset()
+						if err := a.reset(); err != nil {
+							s.log.Error().Str("script", sc.path).
+								Str("name", name).
+								Msg("failed to reset alarm")
+						}
 						return
 					}
 					if err := sc.state.CallByParam(lua.P{
@@ -90,12 +99,26 @@ func (s *Script) createFnStopAlarm(sc *script) func(L *lua.LState) int {
 	}
 }
 
-func (a *alarm) start() {
-	a.t = time.NewTimer(a.getDelay())
+func (a *alarm) start() error {
+	d, err := a.getDelay()
+	if err != nil {
+		return err
+	}
+
+	a.t = time.NewTimer(d)
+
+	return nil
 }
 
-func (a *alarm) reset() {
-	a.t.Reset(a.getDelay())
+func (a *alarm) reset() error {
+	d, err := a.getDelay()
+	if err != nil {
+		return err
+	}
+
+	a.t.Reset(d)
+
+	return nil
 }
 
 func (a *alarm) stop() {
@@ -103,16 +126,21 @@ func (a *alarm) stop() {
 	a.t.Stop()
 }
 
-func (a *alarm) getDelay() time.Duration {
+func (a *alarm) getDelay() (time.Duration, error) {
 	var (
 		execTime    time.Time
-		curDate     = time.Now().UTC()
+		curDate     = time.Now()
 		curWeekDay  = getWeekDay(curDate)
 		nextWeekDay uint8
 		minDiff     float64
 		minDiffDay  uint8
 		d           uint8
 	)
+
+	tz, err := time.LoadLocation("Local")
+	if err != nil {
+		return 0, err
+	}
 
 	for d = 1; d <= 7; d++ {
 		if curWeekDay <= d && a.daysOfWeek&getWeekDayMask(d) != 0 {
@@ -130,18 +158,18 @@ func (a *alarm) getDelay() time.Duration {
 	}
 
 	if nextWeekDay != 0 {
-		execTime = time.Date(curDate.Year(), curDate.Month(), curDate.Day(), 0, 0, 0, 0, time.UTC).AddDate(0, 0, int(nextWeekDay-curWeekDay))
+		execTime = time.Date(curDate.Year(), curDate.Month(), curDate.Day(), 0, 0, 0, 0, tz).AddDate(0, 0, int(nextWeekDay-curWeekDay))
 	} else {
 		days := int((7 + (minDiffDay - curWeekDay)) % 7)
 		if minDiffDay == curWeekDay {
 			days = 7
 		}
-		execTime = time.Date(curDate.Year(), curDate.Month(), curDate.Day(), 0, 0, 0, 0, time.UTC).AddDate(0, 0, days)
+		execTime = time.Date(curDate.Year(), curDate.Month(), curDate.Day(), 0, 0, 0, 0, tz).AddDate(0, 0, days)
 	}
 
-	execTime = time.Date(execTime.Year(), execTime.Month(), execTime.Day(), a.hour, a.minute, a.second, 0, time.UTC)
+	execTime = time.Date(execTime.Year(), execTime.Month(), execTime.Day(), a.hour, a.minute, a.second, 0, tz)
 
-	return execTime.Sub(curDate)
+	return execTime.Sub(curDate), nil
 }
 
 func getWeekDay(t time.Time) uint8 {
