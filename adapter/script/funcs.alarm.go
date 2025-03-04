@@ -1,23 +1,40 @@
 package script
 
 import (
-	"errors"
 	"math"
+	"strings"
 	"time"
 
 	lua "github.com/yuin/gopher-lua"
 )
 
+var weekDays = map[string]uint8{
+	"monday":    1,
+	"tuesday":   2,
+	"wednesday": 4,
+	"thursday":  8,
+	"friday":    16,
+	"saturday":  32,
+	"sunday":    64,
+	"mon":       1,
+	"tues":      2,
+	"wed":       4,
+	"thurs":     8,
+	"fri":       16,
+	"sat":       32,
+	"sun":       64,
+}
+
 func (s *Script) createFnNewAlarm(sc *script) func(L *lua.LState) int {
 	return func(L *lua.LState) int {
 		name := sc.state.ToString(1)
-		daysOfWeek := uint8(sc.state.ToInt(2))
+		dw := sc.state.ToTable(2)
 		hour := sc.state.ToInt(3)
 		minute := sc.state.ToInt(4)
 		second := sc.state.ToInt(5)
 		data := sc.state.ToTable(6)
 
-		if len(name) == 0 {
+		if len(name) == 0 || dw.Len() == 0 {
 			s.log.Error().
 				Str("script", sc.path).
 				Str("name", name).
@@ -25,12 +42,17 @@ func (s *Script) createFnNewAlarm(sc *script) func(L *lua.LState) int {
 			return 0
 		}
 
-		if err := validateDayOfWeek(daysOfWeek); err != nil {
-			s.log.Error().Str("script", sc.path).
-				Str("name", name).
-				Msg("newAlarm incorrect days of week")
-			return 0
-		}
+		var daysOfWeek uint8
+		dw.ForEach(func(_, v lua.LValue) {
+			d := strings.ToLower(v.String())
+			if _, ok := weekDays[d]; !ok {
+				s.log.Error().Str("script", sc.path).
+					Str("name", name).
+					Str("day", d).
+					Msg("wrong day of week")
+			}
+			daysOfWeek += weekDays[d]
+		})
 
 		a := sc.createAlarm(name, daysOfWeek, hour, minute, second)
 		if a == nil {
@@ -63,13 +85,19 @@ func (s *Script) createFnNewAlarm(sc *script) func(L *lua.LState) int {
 						}
 						return
 					}
+
 					if err := sc.state.CallByParam(lua.P{
 						Fn:   fn,
 						NRet: 0,
 					}, lua.LString(name), data); err != nil {
 						s.log.Error().Err(err).Str("script", sc.path).Msg("failed to call OnAlarm function")
 					}
-					a.reset()
+
+					if err := a.reset(); err != nil {
+						s.log.Error().Str("script", sc.path).
+							Str("name", name).
+							Msg("failed to reset alarm")
+					}
 				}
 			}
 		}()
@@ -185,11 +213,4 @@ func getWeekDayMask(d uint8) uint8 {
 		return 1
 	}
 	return uint8(math.Pow(2, float64(d-1)))
-}
-
-func validateDayOfWeek(day uint8) error {
-	if day < 0b00000001 || day > 0b01111111 {
-		return errors.New("not a day of week")
-	}
-	return nil
 }

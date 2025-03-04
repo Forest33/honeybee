@@ -46,8 +46,8 @@ func (s *Script) preloadFunctions(sc *script) {
 	json.Preload(sc.state)
 
 	sc.state.PreloadModule(moduleName, func(L *lua.LState) int {
-		t := L.NewTable()
-		L.SetFuncs(t, map[string]lua.LGFunction{
+		t := sc.state.NewTable()
+		sc.state.SetFuncs(t, map[string]lua.LGFunction{
 			scriptFuncPublish:     s.createFnPublish(sc),
 			scriptFuncNewTimer:    s.createFnNewTimer(sc),
 			scriptFuncNewTicker:   s.createFnNewTicker(sc),
@@ -58,7 +58,7 @@ func (s *Script) preloadFunctions(sc *script) {
 			scriptFuncSendMessage: s.createFnSendMessage(sc),
 			scriptFuncPushNotify:  s.createFnPushNotify(sc),
 		})
-		L.Push(t)
+		sc.state.Push(t)
 		return 1
 	})
 }

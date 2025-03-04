@@ -1,20 +1,13 @@
 local hb = require("honeybee")
 local json = require("json")
 
-local Monday = 1
-local Tuesday = 2
-local Wednesday = 4
-local Thursday = 8
-local Friday = 16
-local Saturday = 32
-local Sunday = 64
-
 local socket_on = false
 local min_temperature = 23
 local max_temperature = 24
 
 function Init()
-    hb.newAlarm("example alarm", Monday + Tuesday + Wednesday + Thursday + Friday + Saturday + Sunday, 12, 30, 00, {})
+    hb.newAlarm("example alarm", {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}, 9, 40, 00, {})
+    hb.newAlarm("example alarm 2", {"Mon", "Tues", "Wed", "Thurs", "Fri", "Sat", "Sun"}, 9, 40, 01, {})
     hb.newTimer("example timer", 1000000000 * 3)
     hb.newTicker("example ticker", 1000000000 * 1)
 
@@ -55,6 +48,6 @@ end
 
 function OnAlarm(name, data)
     print("alarm called: ", name)
-    hb.sendMessage("Test message in Telegram")
-    hb.pushNotify("my-super-secret-topic-name", "Message title", "Message text", "high")
+    --hb.sendMessage("Test message in Telegram")
+    --hb.pushNotify("my-super-secret-topic-name", "Message title", "Message text", "high")
 end
