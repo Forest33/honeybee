@@ -10,7 +10,12 @@ func (uc *ScriptUseCase) subscribeEventHandler() {
 				if !ok {
 					return
 				}
-				uc.subscribers.add(e.Topic, e.Script)
+				uc.subscribers.add(e.Topic, e.Script, func() {
+					if err := uc.mqtt.Subscribe(e.Topic, uc.mqttMessage); err != nil {
+						uc.log.Fatalf("failed to subscribe to topic %s: %v", e.Topic, err)
+					}
+					uc.log.Info().Str("topic", e.Topic).Msg("subscribed to topic")
+				})
 			}
 		}
 	}()

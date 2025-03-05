@@ -18,7 +18,7 @@ func newSubscribers() *subscribers {
 	}
 }
 
-func (s *subscribers) add(topic string, script entity.Script) {
+func (s *subscribers) add(topic string, script entity.Script, handler func()) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -27,6 +27,8 @@ func (s *subscribers) add(topic string, script entity.Script) {
 	}
 
 	s.data[topic][script.Path()] = struct{}{}
+
+	handler()
 }
 
 func (s *subscribers) getScriptsByTopic(topic string) []string {

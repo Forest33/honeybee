@@ -119,6 +119,8 @@ func (s *Script) initScripts() error {
 }
 
 func (s *Script) loadScript(path string) error {
+	s.log.Debug().Str("path", path).Msg("loading script")
+
 	sc := newScript(s.ctx, s.cfg, path)
 
 	s.preloadFunctions(sc)

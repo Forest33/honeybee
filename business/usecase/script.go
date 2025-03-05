@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"sync"
 
 	"github.com/forest33/honeybee/business/entity"
 	"github.com/forest33/honeybee/pkg/logger"
@@ -42,25 +43,21 @@ func NewScriptUseCase(ctx context.Context, cfg *entity.Config, log *logger.Logge
 	uc.subscribeEventHandler()
 	uc.publishEventHandler()
 
-	if err := uc.sh.Start(); err != nil {
-		return nil, err
-	}
+	wgConnect := &sync.WaitGroup{}
+	wgConnect.Add(1)
 
-	uc.mqtt.SetConnectHandler(uc.OnConnect)
+	uc.mqtt.SetConnectHandler(func() { wgConnect.Done() })
 	if err := uc.mqtt.Connect(); err != nil {
 		return nil, err
 	}
 
-	return uc, nil
-}
+	wgConnect.Wait()
 
-func (uc *ScriptUseCase) OnConnect() {
-	for _, t := range uc.subscribers.getTopics() {
-		if err := uc.mqtt.Subscribe(t, uc.mqttMessage); err != nil {
-			uc.log.Fatalf("failed to subscribe to topic %s: %v", t, err)
-		}
-		uc.log.Info().Str("topic", t).Msg("subscribed to topic")
+	if err := uc.sh.Start(); err != nil {
+		return nil, err
 	}
+
+	return uc, nil
 }
 
 func (uc *ScriptUseCase) mqttMessage(m entity.MQTTMessage) {
