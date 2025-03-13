@@ -8,9 +8,9 @@ import (
 
 func (s *Script) createFnNewTimer(sc *script) func(L *lua.LState) int {
 	return func(L *lua.LState) int {
-		name := sc.state.ToString(1)
-		delay := sc.state.ToInt64(2)
-		data := sc.state.ToTable(3)
+		name := L.ToString(1)
+		delay := L.ToInt64(2)
+		data := L.ToTable(3)
 
 		if len(name) == 0 || delay == 0 {
 			s.log.Error().
@@ -34,13 +34,13 @@ func (s *Script) createFnNewTimer(sc *script) func(L *lua.LState) int {
 				s.log.Debug().Str("script", sc.path).Str("name", name).Msg("timer finished")
 				return
 			case <-t.t.C:
-				fn := sc.state.GetGlobal(scriptFuncOnTimer)
+				fn := L.GetGlobal(scriptFuncOnTimer)
 				if fn == lua.LNil || fn == nil || sc.state == nil {
 					s.log.Warn().Str("script", sc.path).Msg("OnTimer function not found, resetting timer")
 					t.t.Reset(time.Duration(delay))
 					return
 				}
-				if err := sc.state.CallByParam(lua.P{
+				if err := L.CallByParam(lua.P{
 					Fn:   fn,
 					NRet: 0,
 				}, lua.LString(name), data); err != nil {
@@ -55,7 +55,7 @@ func (s *Script) createFnNewTimer(sc *script) func(L *lua.LState) int {
 
 func (s *Script) createFnStopTimer(sc *script) func(L *lua.LState) int {
 	return func(L *lua.LState) int {
-		name := sc.state.ToString(1)
+		name := L.ToString(1)
 		if len(name) == 0 {
 			s.log.Error().Str("script", sc.path).Msg("stopTimer incorrect arguments")
 		}

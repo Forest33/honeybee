@@ -8,6 +8,7 @@ type Config struct {
 	Logger       *Logger       `yaml:"Logger"`
 	Runtime      *Runtime      `yaml:"Runtime"`
 	Scripts      *Scripts      `yaml:"Scripts"`
+	Scheduler    *Scheduler    `yaml:"Scheduler"`
 	Bot          *Bot          `yaml:"Bot"`
 	Notification *Notification `yaml:"Notification"`
 }
@@ -32,6 +33,11 @@ type Scripts struct {
 	RegistrySize     int      `yaml:"RegistrySize" default:"32768"`
 	RegistryMaxSize  int      `yaml:"RegistryMaxSize" default:"65536"`
 	RegistryGrowStep int      `yaml:"RegistryGrowStep" default:"32"`
+}
+
+type Scheduler struct {
+	Enabled           bool `yaml:"Enabled" default:"true"`
+	MaxTasksPerSender int  `yaml:"MaxTasksPerSender" default:"0"`
 }
 
 type Bot struct {

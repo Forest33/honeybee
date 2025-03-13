@@ -9,6 +9,7 @@ import (
 
 	"github.com/forest33/honeybee/business/entity"
 	"github.com/forest33/honeybee/pkg/logger"
+	"github.com/forest33/honeybee/pkg/scheduler"
 	"github.com/forest33/honeybee/pkg/structs"
 )
 
@@ -16,6 +17,7 @@ type Client struct {
 	ctx      context.Context
 	log      *logger.Logger
 	cfg      *Config
+	sh       Scheduler
 	baseURL  *url.URL
 	workerCh chan *message
 }
@@ -25,11 +27,16 @@ type message struct {
 	*entity.NotificationMessage
 }
 
-func New(ctx context.Context, cfg *Config, log *logger.Logger) (*Client, error) {
+type Scheduler interface {
+	AddTask(t *scheduler.Task)
+}
+
+func New(ctx context.Context, cfg *Config, log *logger.Logger, sh Scheduler) (*Client, error) {
 	c := &Client{
 		ctx:      ctx,
-		log:      log,
 		cfg:      cfg,
+		log:      log,
+		sh:       sh,
 		workerCh: make(chan *message, cfg.PoolSize),
 	}
 
@@ -66,6 +73,11 @@ func (c *Client) worker() {
 			}
 			if err := c.push(m.ctx, m.NotificationMessage); err != nil {
 				c.log.Error().Err(err).Msg("failed to push notification message")
+				if c.sh != nil {
+					c.sh.AddTask(&scheduler.Task{Handler: func() error {
+						return c.push(m.ctx, m.NotificationMessage)
+					}})
+				}
 			}
 		}
 	}

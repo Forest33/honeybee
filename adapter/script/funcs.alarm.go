@@ -27,12 +27,12 @@ var weekDays = map[string]uint8{
 
 func (s *Script) createFnNewAlarm(sc *script) func(L *lua.LState) int {
 	return func(L *lua.LState) int {
-		name := sc.state.ToString(1)
-		dw := sc.state.ToTable(2)
-		hour := sc.state.ToInt(3)
-		minute := sc.state.ToInt(4)
-		second := sc.state.ToInt(5)
-		data := sc.state.ToTable(6)
+		name := L.ToString(1)
+		dw := L.ToTable(2)
+		hour := L.ToInt(3)
+		minute := L.ToInt(4)
+		second := L.ToInt(5)
+		data := L.ToTable(6)
 
 		if len(name) == 0 || dw.Len() == 0 {
 			s.log.Error().
@@ -75,7 +75,7 @@ func (s *Script) createFnNewAlarm(sc *script) func(L *lua.LState) int {
 					s.log.Debug().Str("script", sc.path).Str("name", name).Msg("alarm finished")
 					return
 				case <-a.t.C:
-					fn := sc.state.GetGlobal(scriptFuncOnAlarm)
+					fn := L.GetGlobal(scriptFuncOnAlarm)
 					if fn == lua.LNil || fn == nil || sc.state == nil {
 						s.log.Warn().Str("script", sc.path).Msg("OnAlarm function not found, resetting timer")
 						if err := a.reset(); err != nil {
@@ -86,7 +86,12 @@ func (s *Script) createFnNewAlarm(sc *script) func(L *lua.LState) int {
 						return
 					}
 
-					if err := sc.state.CallByParam(lua.P{
+					s.log.Debug().
+						Str("script", sc.path).
+						Str("name", name).
+						Msg("running alarm")
+
+					if err := L.CallByParam(lua.P{
 						Fn:   fn,
 						NRet: 0,
 					}, lua.LString(name), data); err != nil {
@@ -108,7 +113,7 @@ func (s *Script) createFnNewAlarm(sc *script) func(L *lua.LState) int {
 
 func (s *Script) createFnStopAlarm(sc *script) func(L *lua.LState) int {
 	return func(L *lua.LState) int {
-		name := sc.state.ToString(1)
+		name := L.ToString(1)
 		if len(name) == 0 {
 			s.log.Error().Str("script", sc.path).Msg("stopAlarm incorrect arguments")
 			L.Push(lua.LBool(false))

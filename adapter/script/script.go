@@ -26,14 +26,16 @@ type Script struct {
 	publishCh   chan *entity.PublishEvent
 	bot         entity.BotHandler
 	notify      entity.NotificationHandler
+	globalVars  *sync.Map
 }
 
 func New(ctx context.Context, cfg *Config, log *logger.Logger) *Script {
 	s := &Script{
-		ctx:     ctx,
-		cfg:     cfg,
-		log:     log,
-		scripts: &sync.Map{},
+		ctx:        ctx,
+		cfg:        cfg,
+		log:        log,
+		scripts:    &sync.Map{},
+		globalVars: &sync.Map{},
 	}
 
 	entity.GetWg(ctx).Add(1)

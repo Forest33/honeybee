@@ -11,6 +11,9 @@ function Init()
     hb.newTimer("example timer", 1000000000 * 3)
     hb.newTicker("example ticker", 1000000000 * 1)
 
+    hb.setGlobal("GlobalVar", "value #1")
+    print("check global variable: ", hb.getGlobal("GlobalVar"))
+
     return {
         Name = "example",
         Description = "An example of the script",
@@ -43,6 +46,7 @@ end
 
 function OnTicker(name, data)
     print("ticker called: ", name)
+    hb.setGlobal("GlobalVar", 33)
     hb.stopTicker(name)
 end
 

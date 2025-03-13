@@ -17,6 +17,7 @@ import (
 	"github.com/forest33/honeybee/pkg/automaxprocs"
 	"github.com/forest33/honeybee/pkg/codec"
 	"github.com/forest33/honeybee/pkg/logger"
+	"github.com/forest33/honeybee/pkg/scheduler"
 )
 
 func main() {
@@ -65,6 +66,13 @@ func main() {
 		l.Fatal(err)
 	}
 
+	var sched *scheduler.Scheduler
+	if cfg.Scheduler.Enabled {
+		sched = scheduler.New(&scheduler.Config{
+			MaxTasksPerSender: cfg.Scheduler.MaxTasksPerSender,
+		}, l)
+	}
+
 	var tgBot *bot.Bot
 	if cfg.Bot.Enabled {
 		tgBot, err = bot.New(ctx, &bot.Config{
@@ -72,7 +80,7 @@ func main() {
 			ChatId:        cfg.Bot.ChatId,
 			UpdateTimeout: cfg.Bot.UpdateTimeout,
 			PoolSize:      cfg.Bot.PoolSize,
-		}, l)
+		}, l, sched)
 		if err != nil {
 			l.Fatal(err)
 		}
@@ -85,7 +93,7 @@ func main() {
 			Timeout:  time.Duration(cfg.Notification.Timeout) * time.Second,
 			Priority: cfg.Notification.Priority,
 			PoolSize: cfg.Notification.PoolSize,
-		}, l)
+		}, l, sched)
 		if err != nil {
 			l.Fatal(err)
 		}

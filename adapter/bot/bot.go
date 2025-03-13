@@ -7,22 +7,29 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
 	"github.com/forest33/honeybee/pkg/logger"
+	"github.com/forest33/honeybee/pkg/scheduler"
 )
 
 type Bot struct {
 	ctx      context.Context
 	cfg      *Config
 	log      *logger.Logger
+	sh       Scheduler
 	bot      *tgbotapi.BotAPI
 	updates  tgbotapi.UpdatesChannel
 	workerCh chan string
 }
 
-func New(ctx context.Context, cfg *Config, log *logger.Logger) (*Bot, error) {
+type Scheduler interface {
+	AddTask(t *scheduler.Task)
+}
+
+func New(ctx context.Context, cfg *Config, log *logger.Logger, sh Scheduler) (*Bot, error) {
 	b := &Bot{
 		ctx:      ctx,
 		cfg:      cfg,
 		log:      log,
+		sh:       sh,
 		workerCh: make(chan string, cfg.PoolSize),
 	}
 
@@ -66,6 +73,11 @@ func (b *Bot) worker() {
 			}
 			if err := b.sendMessage(msg); err != nil {
 				b.log.Error().Err(err).Msg("failed to send message")
+				if b.sh != nil {
+					b.sh.AddTask(&scheduler.Task{Handler: func() error {
+						return b.sendMessage(msg)
+					}})
+				}
 			}
 		}
 	}
