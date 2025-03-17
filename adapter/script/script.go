@@ -2,6 +2,7 @@ package script
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"sync"
@@ -131,8 +132,12 @@ func (s *Script) loadScript(path string) error {
 		return err
 	}
 
+	fn := sc.state.GetGlobal(scriptFuncInit)
+	if fn == nil || fn == lua.LNil {
+		return errors.New("init function not exists")
+	}
 	if err := sc.state.CallByParam(lua.P{
-		Fn:   sc.state.GetGlobal(scriptFuncInit),
+		Fn:   fn,
 		NRet: 1,
 	}); err != nil {
 		return err
@@ -144,6 +149,12 @@ func (s *Script) loadScript(path string) error {
 		return err
 	}
 	sc.state.Pop(1)
+
+	if init.Disabled {
+		s.log.Info().Str("path", path).Msg("script disabled")
+		sc.close()
+		return nil
+	}
 
 	sc.subscribe = init.Subscribe
 	sc.name = init.Name
@@ -157,6 +168,19 @@ func (s *Script) loadScript(path string) error {
 			Script: sc,
 		}
 	})
+
+	fn = sc.state.GetGlobal(scriptFuncMain)
+	if fn == nil || fn == lua.LNil {
+		return nil
+	}
+	go func() {
+		if err := sc.state.CallByParam(lua.P{
+			Fn:   fn,
+			NRet: 1,
+		}); err != nil {
+			s.log.Fatalf("main function execution error in %s - %v", path, err)
+		}
+	}()
 
 	return nil
 }

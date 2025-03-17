@@ -11,6 +11,7 @@ import (
 const (
 	moduleName             = "honeybee"
 	scriptFuncInit         = "Init"
+	scriptFuncMain         = "Main"
 	scriptFuncOnMessage    = "OnMessage"
 	scriptFuncOnTimer      = "OnTimer"
 	scriptFuncOnTicker     = "OnTicker"
@@ -30,16 +31,18 @@ const (
 )
 
 type Config struct {
-	Folder           []string
-	RegistrySize     int
-	RegistryMaxSize  int
-	RegistryGrowStep int
+	Folder              []string
+	RegistrySize        int
+	RegistryMaxSize     int
+	RegistryGrowStep    int
+	IncludeGoStackTrace bool
 }
 
 type scriptInitResponse struct {
 	Name        string
 	Description string
 	Subscribe   []string
+	Disabled    bool
 }
 
 type script struct {
@@ -59,9 +62,10 @@ func newScript(ctx context.Context, cfg *Config, path string) *script {
 	ctx, cancel := context.WithCancel(ctx)
 
 	state := lua.NewState(lua.Options{
-		RegistrySize:     cfg.RegistrySize,
-		RegistryMaxSize:  cfg.RegistryMaxSize,
-		RegistryGrowStep: cfg.RegistryGrowStep,
+		RegistrySize:        cfg.RegistrySize,
+		RegistryMaxSize:     cfg.RegistryMaxSize,
+		RegistryGrowStep:    cfg.RegistryGrowStep,
+		IncludeGoStackTrace: cfg.IncludeGoStackTrace,
 	})
 
 	sc := &script{
@@ -129,9 +133,10 @@ func (s *script) deleteTicker(name string) bool {
 	return true
 }
 
-func (s *script) createAlarm(name string, daysOfWeek uint8, hour, minute, second int) *alarm {
+func (s *script) createAlarm(name string, date time.Time, daysOfWeek uint8, hour, minute, second int) *alarm {
 	ctx, cancel := context.WithCancel(s.ctx)
 	a := &alarm{
+		date:       date,
 		daysOfWeek: daysOfWeek,
 		hour:       hour,
 		minute:     minute,

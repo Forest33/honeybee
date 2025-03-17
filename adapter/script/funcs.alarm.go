@@ -1,6 +1,7 @@
 package script
 
 import (
+	"errors"
 	"math"
 	"strings"
 	"time"
@@ -28,13 +29,14 @@ var weekDays = map[string]uint8{
 func (s *Script) createFnNewAlarm(sc *script) func(L *lua.LState) int {
 	return func(L *lua.LState) int {
 		name := L.ToString(1)
-		dw := L.ToTable(2)
-		hour := L.ToInt(3)
-		minute := L.ToInt(4)
-		second := L.ToInt(5)
-		data := L.ToTable(6)
+		date, dateErr := strToDate(L.ToString(2))
+		dw := L.ToTable(3)
+		hour := L.ToInt(4)
+		minute := L.ToInt(5)
+		second := L.ToInt(6)
+		data := L.ToTable(7)
 
-		if len(name) == 0 || dw.Len() == 0 {
+		if len(name) == 0 || (date.IsZero() && dw.Len() == 0) || (dw.Len() == 0 && dateErr != nil) {
 			s.log.Error().
 				Str("script", sc.path).
 				Str("name", name).
@@ -43,18 +45,21 @@ func (s *Script) createFnNewAlarm(sc *script) func(L *lua.LState) int {
 		}
 
 		var daysOfWeek uint8
-		dw.ForEach(func(_, v lua.LValue) {
-			d := strings.ToLower(v.String())
-			if _, ok := weekDays[d]; !ok {
-				s.log.Error().Str("script", sc.path).
-					Str("name", name).
-					Str("day", d).
-					Msg("wrong day of week")
-			}
-			daysOfWeek += weekDays[d]
-		})
 
-		a := sc.createAlarm(name, daysOfWeek, hour, minute, second)
+		if date.IsZero() {
+			dw.ForEach(func(_, v lua.LValue) {
+				d := strings.ToLower(v.String())
+				if _, ok := weekDays[d]; !ok {
+					s.log.Error().Str("script", sc.path).
+						Str("name", name).
+						Str("day", d).
+						Msg("wrong day of week")
+				}
+				daysOfWeek += weekDays[d]
+			})
+		}
+
+		a := sc.createAlarm(name, date, daysOfWeek, hour, minute, second)
 		if a == nil {
 			return 0
 		}
@@ -175,6 +180,14 @@ func (a *alarm) getDelay() (time.Duration, error) {
 		return 0, err
 	}
 
+	if !a.date.IsZero() {
+		execTime = time.Date(a.date.Year(), a.date.Month(), a.date.Day(), a.hour, a.minute, a.second, 0, tz)
+		if execTime.Before(curDate) {
+			return 0, errors.New("date from the past")
+		}
+		return execTime.Sub(curDate), nil
+	}
+
 	for d = 1; d <= 7; d++ {
 		if curWeekDay <= d && a.daysOfWeek&getWeekDayMask(d) != 0 {
 			if a.hour > curDate.Hour() ||
@@ -218,4 +231,12 @@ func getWeekDayMask(d uint8) uint8 {
 		return 1
 	}
 	return uint8(math.Pow(2, float64(d-1)))
+}
+
+func strToDate(input string) (time.Time, error) {
+	t, err := time.Parse("2006-01-02", input)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return t, nil
 }

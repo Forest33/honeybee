@@ -6,14 +6,6 @@ local min_temperature = 23
 local max_temperature = 24
 
 function Init()
-    hb.newAlarm("example alarm", {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}, 9, 40, 00, {})
-    hb.newAlarm("example alarm 2", {"Mon", "Tues", "Wed", "Thurs", "Fri", "Sat", "Sun"}, 9, 40, 01, {})
-    hb.newTimer("example timer", 1000000000 * 3)
-    hb.newTicker("example ticker", 1000000000 * 1)
-
-    hb.setGlobal("GlobalVar", "value #1")
-    print("check global variable: ", hb.getGlobal("GlobalVar"))
-
     return {
         Name = "example",
         Description = "An example of the script",
@@ -22,6 +14,16 @@ function Init()
             "zigbee2mqtt/socket_1"
         }
     }
+end
+
+function Main()
+    hb.newAlarm("example alarm", "", { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" }, 9, 40, 00, {})
+    hb.newAlarm("example alarm 2", "", { "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat", "Sun" }, 9, 40, 01, {})
+    hb.newTimer("example timer", 1000000000 * 3)
+    hb.newTicker("example ticker", 1000000000 * 1)
+
+    hb.setGlobal("GlobalVar", "value #1")
+    print("check global variable: ", hb.getGlobal("GlobalVar"))
 end
 
 function OnMessage(topic, data)

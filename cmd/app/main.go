@@ -100,10 +100,11 @@ func main() {
 	}
 
 	sh := script.New(ctx, &script.Config{
-		Folder:           cfg.Scripts.Folder,
-		RegistrySize:     cfg.Scripts.RegistrySize,
-		RegistryMaxSize:  cfg.Scripts.RegistryMaxSize,
-		RegistryGrowStep: cfg.Scripts.RegistryGrowStep,
+		Folder:              cfg.Scripts.Folder,
+		RegistrySize:        cfg.Scripts.RegistrySize,
+		RegistryMaxSize:     cfg.Scripts.RegistryMaxSize,
+		RegistryGrowStep:    cfg.Scripts.RegistryGrowStep,
+		IncludeGoStackTrace: cfg.Scripts.IncludeGoStackTrace,
 	}, l)
 
 	_, err = usecase.NewScriptUseCase(ctx, cfg, l, mqttClient, sh, tgBot, notifyClient)

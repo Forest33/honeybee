@@ -23,6 +23,7 @@ type ticker struct {
 }
 
 type alarm struct {
+	date       time.Time
 	daysOfWeek uint8
 	hour       int
 	minute     int

@@ -29,10 +29,11 @@ type MQTT struct {
 }
 
 type Scripts struct {
-	Folder           []string `yaml:"Folder" default:"./config/scripts"`
-	RegistrySize     int      `yaml:"RegistrySize" default:"32768"`
-	RegistryMaxSize  int      `yaml:"RegistryMaxSize" default:"65536"`
-	RegistryGrowStep int      `yaml:"RegistryGrowStep" default:"32"`
+	Folder              []string `yaml:"Folder" default:"./config/scripts"`
+	RegistrySize        int      `yaml:"RegistrySize" default:"32768"`
+	RegistryMaxSize     int      `yaml:"RegistryMaxSize" default:"65536"`
+	RegistryGrowStep    int      `yaml:"RegistryGrowStep" default:"32"`
+	IncludeGoStackTrace bool     `yaml:"IncludeGoStackTrace" default:"false"`
 }
 
 type Scheduler struct {

@@ -1,17 +1,16 @@
 local hb = require("honeybee")
-local json = require("json")
-
-local socket_on = false
-local min_temperature = 23
-local max_temperature = 24
 
 function Init()
-    hb.newTicker("example ticker", 1000000000)
     return {
         Name = "example2",
         Description = "An example of the script #2",
-        Subscribe = {}
+        Subscribe = {},
+        Disabled = true
     }
+end
+
+function Main()
+    hb.newTicker("example ticker", 1000000000)
 end
 
 function OnTicker(name, data)
